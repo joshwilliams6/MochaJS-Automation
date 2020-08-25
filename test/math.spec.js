@@ -5,19 +5,19 @@ const baseURL = 'http://api.mathjs.org/v4/?'
 describe('Math API Test Suite', () => {
 
     before(() => {
-        console.log('Suite setup');
+        // console.log('Suite setup');
     })
 
     beforeEach(() => {
-        console.log('Test setup');
+        // console.log('Test setup');
     })
 
     after(() => {
-        console.log('Suite teardown');
+        // console.log('Suite teardown');
     })
 
     afterEach(() => {
-        console.log('Test teardown');
+        // console.log('Test teardown');
     })
 
     it('Resolve valid expression', async () => {
