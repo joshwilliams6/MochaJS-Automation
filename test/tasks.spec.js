@@ -1,126 +1,107 @@
+// eslint-disable-next-line no-unused-vars
+const should = require('chai').should();
 const fetch = require('node-fetch');
-const assert = require('chai').should();
-const baseURL = 'http://localhost:3000/tasks'
+
+const baseURL = 'http://localhost:3000/tasks';
+
+const ARRAY_IS_EMPTY = 'Array is empty!';
+const CANT_FIND_TASK = "Can't find task with given id";
+const ALL_TASKS_DELETED = 'All tasks were deleted!';
+const TASK_DELETED = 'Task has been deleted succesfully!';
+const DONE_TASK_MESSAGE = 'A task in Done status cannot be reopened';
+const TASK1 = { title: 'Test Title1', description: 'Test description' };
+const TASK2 = { title: 'Test Title2', description: 'Test description' };
+const doneStatus = 'DONE';
+const openStatus = 'OPEN';
 
 const loadTask = async (task) => {
-    const response = await fetch(`${baseURL}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(task)
-    })
-    const result = await response.json()
-    return result.id
-}
+  const response = await fetch(`${baseURL}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(task),
+  });
+  return await response.json();
+};
 
-const cleanAllTasks = async () => {
-    await fetch(`${baseURL}`, { method: 'DELETE' })
-}
+const moveOneTask = async (id, status) => (
+  await fetch(`${baseURL}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ newStatus: status }),
+  })
+);
+
+const getAllTasks = async () => (await fetch(`${baseURL}`, { method: 'GET' }));
+
+const getOneTask = async (id) => (await fetch(`${baseURL}/${id}`, { method: 'GET' }));
+
+const deleteOneTask = async (id) => (await fetch(`${baseURL}/${id}`, { method: 'DELETE' }));
+
+const cleanAllTasks = async () => (await fetch(`${baseURL}`, { method: 'DELETE' }));
 
 describe('Tasks API Test Suite', () => {
+  beforeEach(async () => {
+    cleanAllTasks();
+  });
 
-    beforeEach(async () => {
-        cleanAllTasks()
-    })
+  it('POST - Add one task', async () => {
+    const result = await loadTask(TASK1);
+    result.should.include(TASK1);
+  });
 
-    it('Add one task', async () => {
-        const task1 = { title: "Test Title3", description: "Test description" }
-        const response = await fetch(`${baseURL}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(task1)
-        })
-        const result = await response.json();
-        result.should.include(task1);
-    });
+  it('GET - Retrieve all tasks', async () => {
+    const emptyResponse = await getAllTasks();
+    const emptyResult = await emptyResponse.text();
+    emptyResult.should.contain(ARRAY_IS_EMPTY);
 
-    it('Retrieve all tasks when there no tasks on the array', async () => {
-        const response = await fetch(`${baseURL}`, { method: 'GET' });
-        const result = await response.text();
-        result.should.contain('Array is empty!');
-    });
+    await loadTask(TASK1);
+    await loadTask(TASK2);
+    const notEmptyResponse = await getAllTasks();
+    const notEmptyResult = await notEmptyResponse.json();
+    notEmptyResult[0].should.include(TASK1);
+    notEmptyResult[1].should.include(TASK2);
+  });
 
-    it('Retrieve all tasks when there are some tasks on the array', async () => {
-        const task1 = { title: "Test Title1", description: "Test description" }
-        const task2 = { title: "Test Title2", description: "Test description" }
-        await loadTask(task1)
-        await loadTask(task2)
-        const response = await fetch(`${baseURL}`, { method: 'GET' });
-        const result = await response.json();
-        result[0].should.include(task1);
-        result[1].should.include(task2);
-    });
+  it('GET /:id - Retrieve one task', async () => {
+    const invalidID = 'invalidID';
 
-    it('Retrieve one task with an exisiting id', async () => {
-        const task1 = { title: "Test Title1", description: "Test description" }
-        const id = await loadTask(task1)
-        const response = await fetch(`${baseURL}/${id}`, { method: 'GET' });
-        const result = await response.json();
-        result.should.include(task1);
-    });
+    const emptyResponse = await getOneTask(invalidID);
+    const emptyResult = await emptyResponse.text();
+    emptyResult.should.equal(CANT_FIND_TASK);
 
-    it('Retrieve one task with non exisiting id', async () => {
-        const id = "invalidID"
-        const response = await fetch(`${baseURL}/${id}`, { method: 'GET' });
-        const result = await response.text();
-        result.should.equal("Can't find task with given id");
-    });
+    const { id } = await loadTask(TASK1);
+    const validResponse = await getOneTask(id);
+    const validResult = await validResponse.json();
+    validResult.should.include(TASK1);
+  });
 
-    it('Delete all tasks', async () => {
-        const response = await fetch(`${baseURL}`, { method: 'DELETE' });
-        const result = await response.text();
-        result.should.equal("All tasks were deleted!");
-    });
+  it('DELETE - Delete all tasks', async () => {
+    const response = await cleanAllTasks();
+    const result = await response.text();
+    result.should.equal(ALL_TASKS_DELETED);
+  });
 
-    it('Delete an existing task', async () => {
-        const task1 = { title: "Test Title1", description: "Test description" }
-        const id = await loadTask(task1)
-        const deleteResponse = await fetch(`${baseURL}/${id}`, { method: 'DELETE' });
-        const deleteResult = await deleteResponse.text();
-        deleteResult.should.contain("Task has been deleted succesfully!");
-        const getResponse = await fetch(`${baseURL}/${id}`, { method: 'GET' });
-        const getResult = await getResponse.text();
-        getResult.should.equal("Can't find task with given id");
+  it('DELETE /:id - Delete one task', async () => {
+    const { id } = await loadTask(TASK1);
+    const deleteResponse = await deleteOneTask(id);
+    const deleteResult = await deleteResponse.text();
+    deleteResult.should.equal(TASK_DELETED);
 
-    });
+    const getResponse = await getOneTask(id);
+    const getResult = await getResponse.text();
+    getResult.should.equal(CANT_FIND_TASK);
+  });
 
-    it('Delete a non existing task', async () => {
-        const id = "invalidID"
-        const response = await fetch(`${baseURL}/${id}`, { method: 'DELETE' });
-        const result = await response.text();
-        result.should.equal("Can't find task with given id");
-    });
+  it('PUT :/id - Move one task', async () => {
+    const { id } = await loadTask(TASK1);
 
-    it('Move an open task to done', async () => {
-        const task1 = { title: "Test Title1", description: "Test description" }
-        const id = await loadTask(task1)
-        const done = "DONE"
-        const response = await fetch(`${baseURL}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ newStatus: done })
-        })
-        const result = await response.json();
-        result.should.contain(task1);
-        result.status.should.equal(done);
-    });
+    const openToDoneResponse = await moveOneTask(id, doneStatus);
+    const openToDoneResult = await openToDoneResponse.json();
+    openToDoneResult.should.contain(TASK1);
+    openToDoneResult.status.should.equal(doneStatus);
 
-    it('Move a done task to a previous status', async () => {
-        const task1 = { title: "Test Title1", description: "Test description" }
-        const id = await loadTask(task1)
-        const done = "DONE"
-        const open = "OPEN"
-        await fetch(`${baseURL}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ newStatus: done })
-        })
-        const response = await fetch(`${baseURL}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ newStatus: open })
-        })
-        const result = await response.text();
-        result.should.equal("A task in Done status cannot be reopened");
-    });
-
-})
+    const doneToOpenResponse = await moveOneTask(id, openStatus);
+    const doneToOpenResult = await doneToOpenResponse.text();
+    doneToOpenResult.should.equal(DONE_TASK_MESSAGE);
+  });
+});
