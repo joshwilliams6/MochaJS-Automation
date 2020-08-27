@@ -1,8 +1,9 @@
 // eslint-disable-next-line no-unused-vars
 const should = require('chai').should();
 const fetch = require('node-fetch');
+const env = require('../env.json');
 
-const baseURL = 'http://localhost:3000/tasks';
+const baseURL = env[process.env.STAGE].tasksURL;
 
 const ARRAY_IS_EMPTY = 'Array is empty!';
 const CANT_FIND_TASK = "Can't find task with given id";

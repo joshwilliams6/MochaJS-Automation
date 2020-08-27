@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./test/*.spec.js"
+    "test": "mocha ./test/*.spec.js",
+    "dev": "SET STAGE=development&& npm test",
+    "staging": "SET STAGE=staging&& npm test"
   },
   "repository": {
     "type": "git",
