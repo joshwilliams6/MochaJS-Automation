@@ -49,11 +49,13 @@ describe('Tasks API Test Suite', () => {
     result.should.include(TASK1);
   });
 
-  it('GET - Retrieve all tasks', async () => {
+  it('GET - Retrieve all tasks when the array is empty', async () => {
     const emptyResponse = await getAllTasks();
     const emptyResult = await emptyResponse.text();
     emptyResult.should.contain(ARRAY_IS_EMPTY);
+  });
 
+  it('GET - Retrieve all tasks when there are tasks in the array', async () => {
     await loadTask(TASK1);
     await loadTask(TASK2);
     const notEmptyResponse = await getAllTasks();
@@ -62,13 +64,14 @@ describe('Tasks API Test Suite', () => {
     notEmptyResult[1].should.include(TASK2);
   });
 
-  it('GET /:id - Retrieve one task', async () => {
-    const invalidID = 'invalidID';
-
-    const emptyResponse = await getOneTask(invalidID);
+  it('GET /:id - Retrieve one task with a non-existing id', async () => {
+    const nonExistingID = 'nonExistingID';
+    const emptyResponse = await getOneTask(nonExistingID);
     const emptyResult = await emptyResponse.text();
     emptyResult.should.equal(CANT_FIND_TASK);
+  });
 
+  it('GET /:id - Retrieve one task with an existing id', async () => {
     const { id } = await loadTask(TASK1);
     const validResponse = await getOneTask(id);
     const validResult = await validResponse.json();
@@ -92,7 +95,16 @@ describe('Tasks API Test Suite', () => {
     getResult.should.equal(CANT_FIND_TASK);
   });
 
-  it('PUT :/id - Move one task', async () => {
+  it('PUT :/id - Move one task from open to done', async () => {
+    const { id } = await loadTask(TASK1);
+
+    const openToDoneResponse = await moveOneTask(id, doneStatus);
+    const openToDoneResult = await openToDoneResponse.json();
+    openToDoneResult.should.contain(TASK1);
+    openToDoneResult.status.should.equal(doneStatus);
+  });
+
+  it('PUT :/id - Move one task from done to open', async () => {
     const { id } = await loadTask(TASK1);
 
     const openToDoneResponse = await moveOneTask(id, doneStatus);
