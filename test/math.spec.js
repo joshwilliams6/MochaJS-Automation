@@ -1,8 +1,9 @@
 // eslint-disable-next-line no-unused-vars
 const should = require('chai').should();
 const fetch = require('node-fetch');
+const env = require('../env.json');
 
-const baseURL = 'http://api.mathjs.org/v4/';
+const baseURL = env[process.env.STAGE].mathURL;
 
 const MISSING_PARENTHESIS_ERROR = 'Error: Parenthesis ) expected';
 const UNEXPECTED_END_ERROR = 'Error: Unexpected end of expression';
