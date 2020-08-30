@@ -9,5 +9,5 @@ Note:   Make sure the Tasks API is running @ localhost:3000,
 1. run  'yarn install' or 'npm install'
 
 2. run 'yarn dev' or 'npm run dev' if in development stage,
-        
-        run 'yarn staging' or 'npm run staging' if using staging config.
+   
+    run 'yarn staging' or 'npm run staging' if using staging config.
